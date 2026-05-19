@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IA Reveal
 
-## Getting Started
+A small web app for delivering Inclusive Access codes to students through trackable, scratch-to-reveal links. Built for Textbook Brokers bookstores to defend against refund disputes when students reveal a code and then drop the class.
 
-First, run the development server:
+Each bookstore is expected to run its own copy. Your student data stays in your own database. You control admin access for your store.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What it does
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Sends each student a unique URL instead of the raw code
+- Renders a "scratch to reveal" page with the consent statement
+- Logs first-reveal timestamp, IP, and user agent
+- Exports a Mail Merge CSV for Gmail and a Bulk Orders CSV for the POS
+- Generates a printable evidence packet for refund disputes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Set up your own copy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See [SETUP.md](./SETUP.md) for the full walkthrough.
 
-## Learn More
+If you use Claude Code, install the bundled skill (in [`skill/`](./skill)) and ask:
 
-To learn more about Next.js, take a look at the following resources:
+> Help me deploy my own copy of IA Reveal.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Claude will walk you through Supabase, Vercel, env vars, and a test deployment.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Stack
 
-## Deploy on Vercel
+- Next.js 16 (App Router) on Vercel
+- Supabase Postgres + Auth (magic link)
+- Tailwind CSS
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Customize for your store
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Consent statement**: edit [`src/lib/consent.ts`](./src/lib/consent.ts)
+- **Admin emails**: set the `ADMIN_EMAILS` env var (comma-separated)
+- **Redemption section** (publisher, URL, instructions, button label): per class through the admin UI
+
+## License
+
+Internal Textbook Brokers tool. Use within the company freely.
