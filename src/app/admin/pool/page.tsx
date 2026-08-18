@@ -13,6 +13,9 @@ type PoolRow = {
   batch_label: string | null;
   pos_host: string | null;
   pos_access_code_id: number | null;
+  assigned_student_name: string | null;
+  assigned_student_id: string | null;
+  assignment_note: string | null;
   created_at: string;
 };
 
@@ -27,7 +30,7 @@ export default async function PoolPage() {
 
   const { data: codes } = await supabase
     .from('codes')
-    .select('id, ean, reveal_token, status, batch_label, pos_host, pos_access_code_id, created_at')
+    .select('id, ean, reveal_token, status, batch_label, pos_host, pos_access_code_id, assigned_student_name, assigned_student_id, assignment_note, created_at')
     .order('pos_access_code_id');
 
   const { data: statuses } = await supabase
@@ -40,6 +43,7 @@ export default async function PoolPage() {
   const pool = (codes as PoolRow[]) || [];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const available = pool.filter((c) => c.status === 'available').length;
+  const assigned = pool.filter((c) => c.assigned_student_name).length;
   const revealed = pool.filter((c) => statusById.get(c.id)?.first_revealed_at).length;
 
   return (
@@ -62,9 +66,10 @@ export default async function PoolPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         <Stat label="Codes in pool" value={pool.length.toString()} />
         <Stat label="Available" value={available.toString()} />
+        <Stat label="Assigned to a student" value={assigned.toString()} />
         <Stat label="Revealed" value={revealed.toString()} />
       </div>
 
@@ -81,7 +86,7 @@ export default async function PoolPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr className="text-left text-slate-600">
                 <th className="px-4 py-2 font-medium">POS row</th>
-                <th className="px-4 py-2 font-medium">Batch</th>
+                <th className="px-4 py-2 font-medium">Student</th>
                 <th className="px-4 py-2 font-medium">Reveal URL</th>
                 <th className="px-4 py-2 font-medium">Status</th>
                 <th className="px-4 py-2 font-medium">Revealed</th>
@@ -103,7 +108,25 @@ export default async function PoolPage() {
                     <td className="px-4 py-2 font-mono text-xs text-slate-600">
                       {c.pos_host ? `${c.pos_host} · ` : ''}{c.pos_access_code_id ?? '—'}
                     </td>
-                    <td className="px-4 py-2 text-slate-600">{c.batch_label || '—'}</td>
+                    <td className="px-4 py-2">
+                      {c.assigned_student_name ? (
+                        <>
+                          <div className="text-slate-900">{c.assigned_student_name}</div>
+                          {c.assigned_student_id && (
+                            <div className="font-mono text-xs text-slate-500">
+                              {c.assigned_student_id}
+                            </div>
+                          )}
+                          {c.assignment_note && (
+                            <div className="mt-0.5 text-xs text-amber-700">
+                              {c.assignment_note}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-slate-500">Unassigned</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2">
                       <span className="font-mono text-xs break-all">{url}</span>
                       {tooLong && (
