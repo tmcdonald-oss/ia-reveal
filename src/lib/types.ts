@@ -7,6 +7,7 @@ export type ClassRow = {
   term: string;
   start_date: string;
   drop_deadline: string;
+  opt_out_deadline: string | null;
   publisher: string | null;
   redemption_url: string | null;
   redemption_instructions: string | null;

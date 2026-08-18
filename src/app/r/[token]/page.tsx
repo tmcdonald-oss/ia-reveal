@@ -56,8 +56,21 @@ export default async function RevealPage({
             </div>
 
             {!alreadyRevealed && klass && (
-              <div className="mt-2 text-xs text-slate-500">
-                Drop deadline: {formatDate(klass.drop_deadline)}
+              <div className="mt-3 space-y-1 text-xs text-slate-600">
+                {klass.opt_out_deadline && (
+                  <div>
+                    <span className="font-medium text-slate-700">
+                      Last day to opt out:
+                    </span>{' '}
+                    {formatDate(klass.opt_out_deadline)}
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-slate-700">
+                    Last day for a refund:
+                  </span>{' '}
+                  {formatDate(klass.drop_deadline)}
+                </div>
               </div>
             )}
 

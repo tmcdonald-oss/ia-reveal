@@ -16,6 +16,7 @@ export async function createClass(formData: FormData) {
     term: (formData.get('term') as string)?.trim(),
     start_date: formData.get('start_date') as string,
     drop_deadline: formData.get('drop_deadline') as string,
+    opt_out_deadline: (formData.get('opt_out_deadline') as string) || null,
     publisher: (formData.get('publisher') as string)?.trim() || null,
     redemption_url: (formData.get('redemption_url') as string)?.trim() || null,
     redemption_instructions: (formData.get('redemption_instructions') as string)?.trim() || null,

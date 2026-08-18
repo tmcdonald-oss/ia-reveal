@@ -7,6 +7,7 @@ export type RevealClass = {
   school: string;
   term: string;
   drop_deadline: string;
+  opt_out_deadline: string | null;
   publisher: string | null;
   redemption_url: string | null;
   redemption_instructions: string | null;
@@ -24,7 +25,7 @@ export type RevealSubject = {
 };
 
 const CLASS_FIELDS =
-  'course, section, instructor, school, term, drop_deadline, publisher, redemption_url, redemption_instructions, redemption_button_label';
+  'course, section, instructor, school, term, drop_deadline, opt_out_deadline, publisher, redemption_url, redemption_instructions, redemption_button_label';
 
 /**
  * A lookup that fails should never look the same as a token that does not
