@@ -27,53 +27,98 @@ const CLASS_FIELDS =
   'course, section, instructor, school, term, drop_deadline, publisher, redemption_url, redemption_instructions, redemption_button_label';
 
 /**
+ * A lookup that fails should never look the same as a token that does not
+ * exist. Both used to render the same bare 404, which made a stale
+ * PostgREST schema cache indistinguishable from a bad link. Log loudly.
+ */
+function logLookupError(where: string, error: { message: string; code?: string }) {
+  console.error(
+    `[reveal] ${where} lookup failed: ${error.message}` +
+      (error.code ? ` (code ${error.code})` : '') +
+      `. If this says the table is missing from the schema cache, run ` +
+      `"NOTIFY pgrst, 'reload schema';" in the Supabase SQL editor.`,
+  );
+}
+
+async function fetchClass(classId: string | null): Promise<RevealClass | null> {
+  if (!classId) return null;
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from('classes')
+    .select(CLASS_FIELDS)
+    .eq('id', classId)
+    .maybeSingle();
+  if (error) {
+    logLookupError('class', error);
+    return null;
+  }
+  return (data as unknown as RevealClass) || null;
+}
+
+/**
  * Resolve a reveal token to whatever it points at. Roster students are
  * checked first because that is the older and more specific binding; pool
  * codes are the fallback. Tokens are unique across both tables in practice
- * (140 bits of entropy), so order only matters for cost, not correctness.
+ * (116 bits of entropy), so order only matters for cost, not correctness.
+ *
+ * Class details are fetched separately rather than embedded. The embedded
+ * form depends on PostgREST having the foreign key in its schema cache,
+ * and a cache miss there would drop the whole row rather than just the
+ * class - turning a cosmetic problem into a 404 on a code the student paid
+ * for.
  */
 export async function resolveToken(token: string): Promise<RevealSubject | null> {
   const supabase = createServiceClient();
 
-  const { data: student } = await supabase
+  const { data: student, error: studentError } = await supabase
     .from('students')
-    .select(`id, first_name, code, classes(${CLASS_FIELDS})`)
+    .select('id, first_name, code, class_id')
     .eq('reveal_token', token)
     .maybeSingle();
 
+  if (studentError) logLookupError('student', studentError);
+
   if (student) {
-    const s = student as unknown as {
+    const s = student as {
       id: string;
       first_name: string;
       code: string;
-      classes: RevealClass | null;
+      class_id: string | null;
     };
     return {
       kind: 'student',
       id: s.id,
       code: s.code,
       firstName: s.first_name,
-      klass: s.classes,
+      klass: await fetchClass(s.class_id),
     };
   }
 
-  const { data: pooled } = await supabase
+  const { data: pooled, error: poolError } = await supabase
     .from('codes')
-    .select(`id, code, status, classes(${CLASS_FIELDS})`)
+    .select('id, code, status, class_id')
     .eq('reveal_token', token)
     .maybeSingle();
 
+  if (poolError) logLookupError('code pool', poolError);
+
   if (pooled) {
-    const c = pooled as unknown as {
+    const c = pooled as {
       id: string;
       code: string;
       status: string;
-      classes: RevealClass | null;
+      class_id: string | null;
     };
     // A voided code should not hand out its value, even if someone still
     // holds the link.
     if (c.status === 'void') return null;
-    return { kind: 'code', id: c.id, code: c.code, firstName: null, klass: c.classes };
+    return {
+      kind: 'code',
+      id: c.id,
+      code: c.code,
+      firstName: null,
+      klass: await fetchClass(c.class_id),
+    };
   }
 
   return null;
