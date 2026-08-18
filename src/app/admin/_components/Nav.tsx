@@ -10,6 +10,7 @@ export function Nav({ email }: { email: string }) {
           </Link>
           <nav className="flex gap-4 text-sm text-slate-600">
             <Link href="/admin" className="hover:text-slate-900">Classes</Link>
+            <Link href="/admin/pool" className="hover:text-slate-900">Code pool</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm">
